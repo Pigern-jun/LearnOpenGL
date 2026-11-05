@@ -1,0 +1,11 @@
+{
+    "cmake.useCMakePresets": "always",
+    "cmake.loggingLevel": "debug",
+    "clangd.arguments": [
+        "--compile-commands-dir=build/Debug",
+        "--background-index",
+        "--clang-tidy",
+        "--header-insertion=never"
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:venv",
+}
