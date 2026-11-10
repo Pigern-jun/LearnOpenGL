@@ -3,6 +3,9 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include "ShaderLoader/ShaderLoader.h"
 
@@ -31,16 +34,22 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    auto main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(
+        glfwGetPrimaryMonitor());
+
     // glfw window creation
     // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-    if (window == NULL)
+    GLFWwindow *window = glfwCreateWindow(static_cast<int>(SCR_WIDTH * main_scale),
+                                          static_cast<int>(SCR_HEIGHT * main_scale),
+                                          "LearnOpenGL", nullptr, nullptr);
+    if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
@@ -50,6 +59,26 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    auto &io        = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    // style
+    auto &style     = ImGui::GetStyle();
+    ImGui::StyleColorsDark();
+    style.FrameRounding = 3.0F;
+    style.GrabRounding  = 3.0F;
+
+    style.ScaleAllSizes(main_scale);
+    style.FontScaleDpi = main_scale;
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init();
+
+    auto clear_color = ImVec4(0.45F, 0.55F, 0.60F, 1.0F);
 
     // build and compile our shader program
     // ------------------------------------
@@ -89,6 +118,27 @@ int main()
     // -----------
     while (!glfwWindowShouldClose(window))
     {
+        glfwPollEvents();
+        if (glfwGetWindowAttrib(window, GLFW_ICONIFIED))
+        {
+            ImGui_ImplGlfw_Sleep(10);
+            continue;
+        }
+
+        // draw ui
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        {
+            ImGui::Begin("Hello, world!");
+            ImGui::ColorEdit3("clear color",
+                              reinterpret_cast<float *>(&clear_color));
+
+            ImGui::End();
+        }
+        ImGui::Render();
+
         // input
         // -----
         processInput(window);
@@ -106,8 +156,13 @@ int main()
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
-        glfwPollEvents();
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
@@ -116,6 +171,8 @@ int main()
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
+    glfwDestroyWindow(window);
     glfwTerminate();
+
     return 0;
 }
