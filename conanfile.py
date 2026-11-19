@@ -13,6 +13,8 @@ class LearnOpenGL(ConanFile):
         self.requires("glfw/3.4")
         self.requires("glad/2.0.8")
         self.requires("imgui/1.92.8-docking")
+        self.requires("glm/1.0.3")
+        self.requires("stb/cci.20261021")
         if self.settings.os == "Linux" and not cross_building(self):
             # EGL and GLFW must load the same system Wayland client library.
             self.requires("wayland/system", override=True)
